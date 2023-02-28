@@ -1,0 +1,173 @@
+import math
+import copy
+import numpy as np
+
+def sudoku_solver(puzzle):
+    # declare and set global variables:
+    global nsol
+    global solution
+    nsol, solution = 0, []
+    
+    # initiate puzzle:
+    local_puzzle = init(puzzle)
+    
+    # check puzzle is valid:
+    if not validPuzzle(local_puzzle): raise Exception("Invalid puzzle!")
+    # check a single solution exists: (solve puzzle as side effect)
+    if not solvable(local_puzzle):
+        raise Exception("Could not find a solution!")
+    else:
+        return [[solution[r][c][0] for c in range(9)] for r in range(9)]
+
+
+def solvable(puzzle):
+    # declare global variables:
+    global nsol
+    global solution
+    
+    # make a local copy of puzzle:
+    local_puzzle = copy.deepcopy(puzzle)
+    
+    # find positions of cells with >1 possibilities:
+    positions = [(r, c) for r in range(9) for c in range(9) if len(local_puzzle[r][c]) > 1]
+    
+    # repeat until return (mistake or complete):
+    while True:
+        # by default initiate guess:
+        guess = True
+        
+        # for every cell with more than one possibility:
+        for p in positions:
+            # set row and col coordinates:
+            r,c = p[0], p[1] 
+
+            # make a copy of the possible numbers in the current cell:
+            old = copy.deepcopy(local_puzzle[r][c])
+            
+            # re-evaluate the possible numbers:
+            local_puzzle[r][c] = evaluateCell(local_puzzle, r, c)
+            
+            # if there is a change in the number of possibilities:
+            if local_puzzle[r][c] != old:
+                # no need to guess in this loop:
+                guess = False
+                
+                # if mistake, return false
+                if local_puzzle[r][c] == []: return False
+                
+                # if only one possibility left remove current cell from positions:
+                if len(local_puzzle[r][c]) == 1: positions.remove((r,c))
+        
+        # if complete, record and check solution:
+        if len(positions) == 0:
+            if local_puzzle != solution: nsol += 1
+            
+            # if first solution, return true, else raise exception:
+            if nsol == 1:
+                solution = local_puzzle
+                return True
+            else:
+                raise Exception("More than one solution has been found!")
+        
+        # if no change in possibilites make a guess:
+        if guess:
+            # make a copy of the local puzzle for testing:
+            test_puzzle = copy.deepcopy(local_puzzle)
+            
+            # get the position the first cell with the fewest possibilities:
+            minp = min([len(local_puzzle[p[0]][p[1]]) for p in positions])
+            guess_position = next((p for p in positions if len(local_puzzle[p[0]][p[1]]) == minp), None)
+            
+            # set row and col coordinates
+            r,c = guess_position[0],guess_position[1]
+            
+            # for possible number at guess position:
+            for n in local_puzzle[r][c]:
+                # set test cell to n:
+                test_puzzle[r][c] = [n]
+                
+                # if not solvable: (if solveable recorded through global variables and exceptions)
+                if not solvable(test_puzzle):
+                    # remove possibility from cell
+                    local_puzzle[r][c].remove(n)
+                    # if only one possibility left remove current cell from positions:
+                    if len(local_puzzle[r][c]) == 1: positions.remove((r,c))
+                    break
+                
+def validPuzzle(puzzle):
+    # check the shape is ok:
+    valid_nums = all(puzzle[r][c][0] in range(1,10) for r in range(9) for c in range(9))
+    valid_dims = len(puzzle) == 9 and all([len(r) == 9 for r in puzzle])
+
+    # of invalid shape return false
+    if not valid_dims or not valid_nums: return False
+    
+    # for i in sqr/row/col:
+    for i in range(9):
+        # get certain values of row:
+        row = puzzle[i]
+        row = [r[0] for r in row if len(r) == 1]
+        
+        # get certain values of col:
+        col = [p[i] for p in puzzle]
+        col = [c[0] for c in col if len(c) == 1]
+        
+        # find bounds of sqr and get certain values of sqr:
+        cmin, rmin = math.floor(i/3)* 3, (i % 3)*3
+        sqr = [puzzle[r][c] for c in range(cmin,cmin+3) for r in range(rmin,rmin+3)]
+        sqr = [s[0] for s in sqr if len(s) == 1]
+        
+        # check there are no mismatches:
+        if sorted(row) != list(np.unique(row)) or sorted(col) != list(np.unique(col)) or  sorted(sqr) != list(np.unique(sqr)):
+            return False
+        
+    # if no fault identified return true:
+    return True
+
+
+                
+def init(puzzle):
+    # create a local copy of the puzzle:
+    local_puzzle = copy.deepcopy(puzzle)
+    
+    # for each cell, if empty populate all possibilities else convert to list
+    for r in range(9):
+        for c in range(9):
+            if local_puzzle[r][c] == 0:
+                local_puzzle[r][c] = list(range(1,10))
+            else:
+                local_puzzle[r][c] = [local_puzzle[r][c]]
+    
+    # return local puzzle
+    return local_puzzle
+
+
+
+def evaluateCell(puzzle, r, c):
+    # get the bounds of the square:
+    cmin,rmin = 3*math.floor(c/3),3*math.floor(r/3)
+    
+    # get possibilities from row col and sqr:
+    row = puzzle[r]
+    col = [p[c] for p in puzzle]
+    sqr = [puzzle[r][c] for c in range(cmin,cmin+3) for r in range(rmin,rmin+3)]
+    
+    # update possibilites in cell [r,c] based on the cells with known numbers:
+    known_numbers = [i[0] for i in row+col+sqr if len(i) == 1]
+    puzzle[r][c] = [i for i in puzzle[r][c] if i not in known_numbers]
+    
+    # for each possibility in cell [r,c]:
+    for n in puzzle[r][c]:
+        
+        # sum the instances of n in sqr, col and row:
+        in_sqr = sum([n in i for i in sqr])
+        in_col = sum([n in i for i in col])
+        in_row = sum([n in i for i in row])
+        
+        # if n is the only instance, cell [r,c] = n and return puzzle
+        if any([s == 1 for s in [in_sqr, in_col, in_row]]):
+            puzzle[r][c] = [n]
+            return puzzle[r][c]
+    
+    # return local puzzle:
+    return puzzle[r][c]
