@@ -10,5 +10,5 @@ This script solved a large set of puzzles on the servers at codewars.com within 
 The project has been updated with a computer vision module that extracts unsolved puzzles from images following the tutorial outlined at https://pyimagesearch.com/2020/08/10/opencv-sudoku-solver-and-ocr/. classifier.py and train_classifier.py contain a DNN and the script to train it on the MNIST data set using tensorflow. This model is supported by a computer vision script (reader.py) that extracts puzzles from an image using a procedure based on OpenCV. 
 
 Usage: 
-solve_sudoku.py -p [path to digit classifier] -i [path to sudoku image] -d [debug (1 or 0)] 
-train_classifier -p [path to save digit classifier]
+solve_sudoku.py -m [path to digit classifier] -i [path to sudoku image] -d [debug (1 or 0)] 
+train_classifier -m [path to save digit classifier]
