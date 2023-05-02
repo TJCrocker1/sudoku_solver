@@ -1,7 +1,7 @@
 # sudoku_solver
 A Sudoku solver written in python.
 
-A Sudoku solver written in python. solver.py provides a sudoku solving algorythem that takes a 9 by 9 list where each cell is either an integer [1-9] or empty (0) and returns a completed sudoku. The script starts by applying two rules to each cell: inclusion (i.e. just one number is missing from the row/col/sqr) and exclusion (i.e. only one number is left for that cell). These rules are sufficient to solve easy puzzles but for hard puzzles guesswork is required.
+A Sudoku solver written in python. solver.py provides a sudoku solving algorithm that takes a 9 by 9 list where each cell is either an integer [1-9] or empty (0) and returns a completed sudoku. The script starts by applying two rules to each cell: inclusion (i.e. just one number is missing from the row/col/sqr) and exclusion (i.e. only one number is left for that cell). These rules are sufficient to solve easy puzzles but for hard puzzles guesswork is required.
 
 When no further cells can be updated by inclusion / exclusion, recursion is used to make a guess. After each guess the inclusion / exclusion rules are re-applied. This process will return either a completed sudoku or an exception that can be used to rule out false guesses. If a single solution is found the scrip will return that solution as a 9 by 9 list. If the input is invalid or the sudoku has more than one solution an exception is raised.
 
